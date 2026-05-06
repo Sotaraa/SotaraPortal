@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { LogOut, Grid3X3 } from 'lucide-react'
+import { LogOut, Grid3X3, Settings } from 'lucide-react'
 import toast from 'react-hot-toast'
 import AppCard from '@/components/AppCard'
+import Link from 'next/link'
 
 // Single client instance for this module — never recreated on re-render
 const supabase = createClient()
@@ -122,13 +123,20 @@ export default function DashboardPage() {
             <Grid3X3 className="w-8 h-8 text-blue-500" />
             <h1 className="text-2xl font-bold text-white">Sotara Portal</h1>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm text-slate-400">Logged in as</p>
               <p className="text-white font-medium">
                 {user?.user_metadata?.full_name || user?.email}
               </p>
             </div>
+            <Link
+              href="/admin/billing"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              Admin
+            </Link>
             <button
               onClick={handleSignOut}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
