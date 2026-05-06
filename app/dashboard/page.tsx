@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { LogOut, Grid3X3 } from 'lucide-react'
@@ -23,12 +23,13 @@ interface App {
 
 export default function DashboardPage() {
   const router = useRouter()
+  const supabaseRef = useRef(createClient())
   const [user, setUser] = useState<any>(null)
   const [apps, setApps] = useState<App[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = createClient()
+    const supabase = supabaseRef.current
 
     const loadDashboard = async () => {
       const {
@@ -79,7 +80,7 @@ export default function DashboardPage() {
   }, [])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    await supabaseRef.current.auth.signOut()
     toast.success('Signed out successfully')
     router.replace('/auth/login')
   }
