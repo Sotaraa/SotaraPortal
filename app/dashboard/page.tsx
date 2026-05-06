@@ -90,7 +90,9 @@ export default function DashboardPage() {
 
     loadDashboard()
     return () => { cancelled = true }
-  }, [router])
+  // router is stable in App Router but excluded to guarantee single run
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
