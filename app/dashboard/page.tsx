@@ -34,15 +34,18 @@ export default function DashboardPage() {
     let cancelled = false
 
     const loadDashboard = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      // getUser() validates the JWT against the Supabase Auth server.
+      // getSession() only reads localStorage cache — stale/mid-refresh JWTs
+      // cause PostgREST 401s on subsequent data queries.
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
 
-      if (!session) {
+      if (authError || !authUser) {
         router.replace('/auth/login')
         return
       }
 
       if (cancelled) return
-      setUser(session.user)
+      setUser(authUser)
 
       // Query apps directly — RLS handles auth, no API route needed
       const { data: appsData, error: appsError } = await supabase
@@ -63,13 +66,13 @@ export default function DashboardPage() {
       const { data: subscriptions } = await supabase
         .from('user_subscriptions')
         .select('*')
-        .eq('user_id', session.user.id)
+        .eq('user_id', authUser.id)
         .eq('is_active', true)
 
       const { data: onboarding } = await supabase
         .from('user_onboarding_status')
         .select('*')
-        .eq('user_id', session.user.id)
+        .eq('user_id', authUser.id)
 
       if (cancelled) return
 

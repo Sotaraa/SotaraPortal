@@ -11,8 +11,11 @@ declare global {
 
 export function createClient() {
   if (typeof window === 'undefined') {
-    // Server: fresh instance per request (no localStorage anyway)
-    return createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    // Server: no session persistence — prevents GoTrueClient lock collisions
+    // with the browser instance that hydrates after SSR
+    return createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    })
   }
   // Browser: one instance for the entire lifetime of the tab
   if (!window.__supabase) {
