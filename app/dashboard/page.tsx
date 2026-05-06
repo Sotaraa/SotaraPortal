@@ -1,11 +1,14 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { LogOut, Grid3X3 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import AppCard from '@/components/AppCard'
+
+// Single client instance for this module — never recreated on re-render
+const supabase = createClient()
 
 interface App {
   id: string
@@ -23,64 +26,74 @@ interface App {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const supabaseRef = useRef(createClient())
   const [user, setUser] = useState<any>(null)
   const [apps, setApps] = useState<App[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = supabaseRef.current
+    let cancelled = false
 
     const loadDashboard = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      const { data: { session } } = await supabase.auth.getSession()
 
       if (!session) {
         router.replace('/auth/login')
         return
       }
+
+      if (cancelled) return
       setUser(session.user)
 
-      const token = session.access_token
+      // Query apps directly — RLS handles auth, no API route needed
+      const { data: appsData, error: appsError } = await supabase
+        .from('apps')
+        .select('*')
+        .eq('is_active', true)
 
-      // Auto-provision user profile on first login
-      try {
-        await fetch('/api/auth/provision', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-        })
-      } catch (error) {
-        console.error('Error provisioning profile:', error)
+      if (cancelled) return
+
+      if (appsError) {
+        console.error('Error fetching apps:', appsError)
+        toast.error('Failed to load apps', { id: 'apps-error' })
+        setLoading(false)
+        return
       }
 
-      // Fetch apps with auth token
-      try {
-        const response = await fetch('/api/apps', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (response.ok) {
-          const data = await response.json()
-          setApps(data)
-        } else {
-          const err = await response.json()
-          console.error('Apps error:', err)
-          toast.error('Failed to load apps', { id: 'apps-error' })
+      // Fetch user's subscriptions and onboarding status
+      const { data: subscriptions } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('is_active', true)
+
+      const { data: onboarding } = await supabase
+        .from('user_onboarding_status')
+        .select('*')
+        .eq('user_id', session.user.id)
+
+      if (cancelled) return
+
+      const appsWithStatus = (appsData || []).map((app: any) => {
+        const sub = (subscriptions || []).find((s: any) => s.app_id === app.id)
+        const ob = (onboarding || []).find((o: any) => o.app_id === app.id)
+        return {
+          ...app,
+          isSubscribed: !!sub,
+          subscription: sub || null,
+          onboarding: ob || null,
         }
-      } catch (error) {
-        console.error('Error fetching apps:', error)
-        toast.error('Error loading apps', { id: 'apps-error' })
-      }
+      })
 
+      setApps(appsWithStatus)
       setLoading(false)
     }
 
     loadDashboard()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    return () => { cancelled = true }
+  }, [router])
 
   const handleSignOut = async () => {
-    await supabaseRef.current.auth.signOut()
+    await supabase.auth.signOut()
     toast.success('Signed out successfully')
     router.replace('/auth/login')
   }
@@ -98,14 +111,12 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
-      {/* Header */}
       <header className="border-b border-slate-700 bg-slate-900/50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Grid3X3 className="w-8 h-8 text-blue-500" />
             <h1 className="text-2xl font-bold text-white">Sotara Portal</h1>
           </div>
-
           <div className="flex items-center gap-6">
             <div className="text-right">
               <p className="text-sm text-slate-400">Logged in as</p>
@@ -124,23 +135,18 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-white mb-2">Available Apps</h2>
-          <p className="text-slate-400">
-            Access all your Sotara applications from one place
-          </p>
+          <p className="text-slate-400">Access all your Sotara applications from one place</p>
         </div>
 
-        {/* Apps Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {apps.map((app) => (
             <AppCard key={app.id} app={app} />
           ))}
         </div>
 
-        {/* Empty State */}
         {apps.length === 0 && (
           <div className="text-center py-12">
             <p className="text-slate-400 text-lg">
