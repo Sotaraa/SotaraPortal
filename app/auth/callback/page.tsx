@@ -6,28 +6,26 @@ import { createClient } from '@/lib/supabase'
 
 export default function AuthCallbackPage() {
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
-    // Supabase JS automatically reads the hash fragment (#access_token=...) from the URL
-    // and establishes the session. We just need to wait for it.
+    const supabase = createClient()
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         router.replace('/dashboard')
-      } else if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
+      } else if (event === 'SIGNED_OUT') {
         router.replace('/auth/login')
       }
     })
 
-    // Also check if session already exists (handles page refresh)
+    // Handle case where session is already established
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        router.replace('/dashboard')
-      }
+      if (session) router.replace('/dashboard')
     })
 
     return () => subscription.unsubscribe()
-  }, [router, supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">

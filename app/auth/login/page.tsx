@@ -6,21 +6,22 @@ import { createClient } from '@/lib/supabase'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+// Singleton — safe to call at module level now
+const supabase = createClient()
+
 export default function LoginPage() {
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
+    const supabase = createClient()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (session) {
-          router.replace('/dashboard')
-        }
+        if (session) router.replace('/dashboard')
       }
     )
-
     return () => subscription.unsubscribe()
-  }, [router, supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
