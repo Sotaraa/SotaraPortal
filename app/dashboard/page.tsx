@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { LogOut, Grid3X3 } from 'lucide-react'
@@ -23,12 +23,13 @@ interface App {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const supabase = useMemo(() => createClient(), [])
   const [user, setUser] = useState<any>(null)
   const [apps, setApps] = useState<App[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const supabase = createClient()
+
     const loadDashboard = async () => {
       const {
         data: { session },
@@ -63,18 +64,19 @@ export default function DashboardPage() {
         } else {
           const err = await response.json()
           console.error('Apps error:', err)
-          toast.error('Failed to load apps')
+          toast.error('Failed to load apps', { id: 'apps-error' })
         }
       } catch (error) {
         console.error('Error fetching apps:', error)
-        toast.error('Error loading apps')
+        toast.error('Error loading apps', { id: 'apps-error' })
       }
 
       setLoading(false)
     }
 
     loadDashboard()
-  }, [supabase, router])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
