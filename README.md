@@ -1,36 +1,159 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sotara Portal
+
+A unified platform launcher for all Sotara applications (like Adobe Creative Cloud). Users get a single login to access all their subscribed apps.
+
+## Features
+
+### ✅ Phase 1-2 Complete
+- **Unified Authentication** - Single sign-on via Azure OAuth (Supabase Auth)
+- **App Grid Dashboard** - Browse and launch available apps
+- **Subscription Management** - Per-app subscriptions (basic, pro, enterprise tiers)
+- **Onboarding Tracking** - Track which apps users have completed onboarding for
+- **Consent Logging** - Audit trail for GDPR/compliance
+- **Admin Panel** - Manage user subscriptions
+
+### 🔄 Available Apps
+1. **SwiftCues** - IT Support Ticketing Platform
+2. **Ventra** - School Visitor Management
+3. **Leave System** - Employee Leave Management
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Framework** | Next.js 14 (App Router) |
+| **Auth** | Supabase Auth + Azure OAuth |
+| **Database** | Supabase Postgres |
+| **Styling** | Tailwind CSS |
+| **Icons** | Lucide React |
+| **Hosting** | Vercel (ready to deploy) |
+
+## Project Structure
+
+```
+sotara-portal/
+├── app/
+│   ├── layout.tsx              # Root layout with Toaster
+│   ├── page.tsx                # Redirect to /dashboard
+│   ├── auth/
+│   │   ├── login/page.tsx      # Azure OAuth login
+│   │   └── callback/route.ts   # OAuth redirect handler
+│   ├── dashboard/page.tsx      # Main app grid
+│   ├── admin/
+│   │   └── billing/page.tsx    # Subscription management
+│   └── api/
+│       ├── apps/              # List subscribed apps
+│       ├── subscriptions/      # Manage subscriptions
+│       ├── onboarding/         # Track onboarding status
+│       └── consent/            # Log consent/permissions
+├── components/
+│   └── AppCard.tsx             # App display component
+├── lib/
+│   ├── supabase.ts            # Supabase client
+│   └── auth.ts                # Auth utilities
+├── migrations/                 # Database setup
+├── middleware.ts               # Request handling
+└── .env.local                  # Local secrets
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- npm or pnpm
+- Supabase project (use same as SwiftCues/Ventra)
 
+### Local Development
+
+1. **Install dependencies**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Setup environment**
+```bash
+cp .env.local.example .env.local
+# Edit with your Supabase URL and keys
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Run database migrations** (first time only)
+   - Go to Supabase Dashboard → SQL Editor
+   - Copy & run each migration file in order (001-005) from `./migrations/`
+   - See `./migrations/README.md` for details
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. **Start dev server**
+```bash
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000)
 
-To learn more about Next.js, take a look at the following resources:
+### First Time Setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Login** with Azure OAuth
+2. **Add subscription**: Go to `/admin/billing`, search your user, add a subscription
+3. **Dashboard shows apps**: Now you'll see apps you're subscribed to
+4. **Launch app**: Click an app to open in new tab
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API Endpoints
 
-## Deploy on Vercel
+### GET `/api/apps`
+List apps user is subscribed to with onboarding status.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### POST `/api/subscriptions`
+Create subscription (admin only).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### GET/POST `/api/onboarding/status`
+Check/update onboarding completion.
+
+### POST `/api/consent/log`
+Log consent for audit trail.
+
+See code comments for request/response formats.
+
+## Deployment to Vercel
+
+1. **Create GitHub repo** and push code
+2. **Connect to Vercel** via GitHub integration
+3. **Set env vars** in Vercel dashboard:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_APP_URL`
+
+4. **Deploy** - Automatic on push to main
+
+## Next Steps (Phase 3)
+
+- [ ] Create GitHub repository
+- [ ] Setup Supabase project (or extend existing one)
+- [ ] Run database migrations
+- [ ] Deploy to Vercel
+- [ ] Configure Azure OAuth for your domain
+- [ ] Test end-to-end flow
+- [ ] Integrate onboarding flows from each app
+- [ ] Build consent prompts
+
+## Database Migrations
+
+Run these in order in Supabase SQL Editor:
+
+1. `001_create_apps.sql` - App registry
+2. `002_create_user_subscriptions.sql` - Subscriptions
+3. `003_create_user_onboarding_status.sql` - Onboarding tracking
+4. `004_create_consent_logs.sql` - Audit trail
+5. `005_insert_default_apps.sql` - Seed 3 default apps
+
+See `./migrations/README.md` for more details.
+
+## Built With
+
+- Next.js 14 (Turbopack)
+- Supabase (Postgres + Auth)
+- Tailwind CSS
+- TypeScript
+- Lucide React
+
+---
+
+**Status**: Phase 2 Complete - Ready for GitHub & Supabase setup
+**Last Updated**: May 6, 2026
