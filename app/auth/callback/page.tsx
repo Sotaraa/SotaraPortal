@@ -13,12 +13,13 @@ export default function AuthCallbackPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
         router.replace('/dashboard')
-      } else if (event === 'SIGNED_OUT') {
-        router.replace('/auth/login')
       }
+      // No SIGNED_OUT handler here — handling it caused a redirect loop:
+      // callback SIGNED_OUT → login → login sees session → dashboard → repeat.
+      // The dashboard's getUser() handles invalid sessions by redirecting to login.
     })
 
-    // Handle case where session is already established
+    // Handle case where PKCE exchange already completed before this effect ran
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.replace('/dashboard')
     })

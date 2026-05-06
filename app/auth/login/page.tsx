@@ -16,7 +16,12 @@ export default function LoginPage() {
     const supabase = createClient()
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        if (session) router.replace('/dashboard')
+        // Only redirect on explicit sign-in. TOKEN_REFRESHED also carries a session
+        // but must NOT trigger navigation — that causes a redirect loop where the
+        // GoTrueClient's background refresh cycle continuously re-mounts the dashboard.
+        if (event === 'SIGNED_IN' && session) {
+          router.replace('/dashboard')
+        }
       }
     )
     return () => subscription.unsubscribe()
