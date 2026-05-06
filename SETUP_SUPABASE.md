@@ -16,6 +16,30 @@ Your Supabase project is ready. Follow these steps to set up the database:
 -- Sotara Portal Database Schema
 -- Run this in Supabase SQL Editor
 
+-- 0. Create profiles table (user info on first login)
+CREATE TABLE IF NOT EXISTS profiles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  auth_user_id uuid NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  email text NOT NULL,
+  full_name text,
+  role text DEFAULT 'user',
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_profiles_auth_user_id ON profiles(auth_user_id);
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own profile" ON profiles
+  FOR SELECT USING (auth.uid() = auth_user_id);
+
+CREATE POLICY "Users can update their own profile" ON profiles
+  FOR UPDATE USING (auth.uid() = auth_user_id);
+
+CREATE POLICY "Service role can create profiles" ON profiles
+  FOR INSERT WITH CHECK (true);
+
 -- 1. Create apps table
 CREATE TABLE IF NOT EXISTS apps (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

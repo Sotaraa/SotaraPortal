@@ -39,6 +39,13 @@ export default function DashboardPage() {
       }
       setUser(user)
 
+      // Auto-provision user profile on first login
+      try {
+        await fetch('/api/auth/provision', { method: 'POST' })
+      } catch (error) {
+        console.error('Error provisioning profile:', error)
+      }
+
       // Fetch apps
       try {
         const response = await fetch('/api/apps')
