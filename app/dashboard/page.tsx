@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { LogOut, Grid3X3 } from 'lucide-react'
@@ -23,7 +23,7 @@ interface App {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const [user, setUser] = useState<any>(null)
   const [apps, setApps] = useState<App[]>([])
   const [loading, setLoading] = useState(true)
@@ -31,28 +31,38 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadDashboard = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session) {
         router.replace('/auth/login')
         return
       }
-      setUser(user)
+      setUser(session.user)
+
+      const token = session.access_token
 
       // Auto-provision user profile on first login
       try {
-        await fetch('/api/auth/provision', { method: 'POST' })
+        await fetch('/api/auth/provision', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        })
       } catch (error) {
         console.error('Error provisioning profile:', error)
       }
 
-      // Fetch apps
+      // Fetch apps with auth token
       try {
-        const response = await fetch('/api/apps')
+        const response = await fetch('/api/apps', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         if (response.ok) {
           const data = await response.json()
           setApps(data)
         } else {
+          const err = await response.json()
+          console.error('Apps error:', err)
           toast.error('Failed to load apps')
         }
       } catch (error) {
