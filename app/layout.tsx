@@ -25,21 +25,21 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${jakarta.variable} ${dmMono.variable} h-full`}>
-      <body className="min-h-full antialiased" style={{ background: '#07090e', color: '#eef2ff' }}>
+      <body className="min-h-full antialiased" style={{ background: '#0c1628', color: '#e8effc' }}>
         {children}
         <Toaster
           position="top-right"
           toastOptions={{
             style: {
-              background: '#0f1525',
-              color: '#eef2ff',
-              border: '1px solid #1e2a40',
+              background: '#162035',
+              color: '#e8effc',
+              border: '1px solid #213050',
               borderRadius: '10px',
               fontFamily: 'var(--font-jakarta)',
               fontSize: '14px',
             },
-            success: { iconTheme: { primary: '#4ade80', secondary: '#0f1525' } },
-            error:   { iconTheme: { primary: '#f87171', secondary: '#0f1525' } },
+            success: { iconTheme: { primary: '#4ade80', secondary: '#162035' } },
+            error:   { iconTheme: { primary: '#f87171', secondary: '#162035' } },
           }}
         />
       </body>
